@@ -69,7 +69,7 @@ my-event-processing-system/
 
 Create a `.env` file using the template below:
 
-```env
+
 MYSQL_ROOT_PASSWORD=root
 MYSQL_DATABASE=events_db
 MYSQL_USER=app
