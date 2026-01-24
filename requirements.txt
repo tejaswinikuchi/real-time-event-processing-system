@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+confluent-kafka
+redis
+mysql-connector-python
+python-dotenv
+pydantic
+sqlalchemy
+pymysql
+cryptography
