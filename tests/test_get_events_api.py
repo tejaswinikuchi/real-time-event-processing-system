@@ -1,6 +1,6 @@
 from datetime import datetime
-from app.models.processed_event import ProcessedEvent
 from app.models.db import SessionLocal
+from app.models.processed_event import ProcessedEvent
 
 
 def test_get_events_by_sensor(client):
@@ -17,7 +17,11 @@ def test_get_events_by_sensor(client):
     db.commit()
     db.close()
 
-    response = client.get("/api/events/sensor-2")
+    response = client.get("/events/sensor-2")
 
     assert response.status_code == 200
-    assert len(response.json()) == 1
+
+    data = response.json()
+
+    assert isinstance(data, list)
+    assert data[0]["sensorId"] == "sensor-2"

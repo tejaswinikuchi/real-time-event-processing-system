@@ -1,5 +1,14 @@
-venv/
-.env
 __pycache__/
-.pytest_cache/
 *.pyc
+*.pyo
+*.pyd
+
+.env
+
+.venv
+venv/
+
+dist/
+build/
+
+.DS_Store

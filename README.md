@@ -6,6 +6,30 @@ The system is built to handle high-throughput event ingestion while keeping read
 
 ---
 
+## System Architecture
+
+The system follows an event-driven architecture designed for scalable real-time event processing.
+
+Components:
+
+- **FastAPI API Service**  
+  Handles incoming sensor events and publishes them to Kafka.
+
+- **Apache Kafka**  
+  Acts as the event streaming platform and message broker.
+
+- **Consumer Service**  
+  Consumes events from Kafka, processes them, and stores them in MySQL.
+
+- **MySQL Database**  
+  Stores processed sensor events persistently.
+
+- **Redis Cache**  
+  Provides fast access for read APIs using a cache-aside strategy.
+
+- **Docker Compose**  
+  Orchestrates all services and infrastructure components.
+
 ## Overview
 
 The system consists of two main services:
@@ -23,6 +47,15 @@ The system consists of two main services:
 Supporting infrastructure includes Kafka, ZooKeeper, Redis, and MySQL, all orchestrated using Docker Compose.
 
 ---
+## Event Processing Flow
+
+1. A client sends a sensor event to the API service.
+2. The API validates the payload and publishes the event to the Kafka topic `sensor_readings`.
+3. Kafka stores the event and makes it available to consumers.
+4. The consumer service reads the event from Kafka.
+5. The consumer processes the event and stores it in the MySQL `processed_events` table.
+6. Redis cache entries related to that sensor are invalidated.
+7. Future API requests fetch fresh data from the database and update the cache.
 
 ## Technology Stack
 
@@ -39,22 +72,23 @@ Supporting infrastructure includes Kafka, ZooKeeper, Redis, and MySQL, all orche
 
 ## Project Structure
 
+```text
 my-event-processing-system/
 ├── app/
-│ ├── api/ # API routes
-│ ├── kafka/ # Kafka producer and consumer
-│ ├── cache/ # Redis cache logic
-│ ├── models/ # Database models
-│ ├── schemas/ # Request/response schemas
-│ └── main.py # FastAPI application entry point
-├── tests/ # Unit and integration tests
+│   ├── api/        # API routes
+│   ├── kafka/      # Kafka producer and consumer
+│   ├── cache/      # Redis cache logic
+│   ├── models/     # Database models
+│   ├── schemas/    # Request/response schemas
+│   └── main.py     # FastAPI application entry point
+├── tests/          # Unit and integration tests
 ├── Dockerfile.api
 ├── Dockerfile.consumer
 ├── docker-compose.yml
 ├── requirements.txt
 ├── .env.example
 └── README.md
-
+```
 
 ---
 
@@ -70,15 +104,19 @@ my-event-processing-system/
 Create a `.env` file using the template below:
 
 
+```env
 MYSQL_ROOT_PASSWORD=root
 MYSQL_DATABASE=events_db
 MYSQL_USER=app
 MYSQL_PASSWORD=app
+```
 
 All application configuration (database, Kafka, Redis) is managed using environment variables.
 
 ### Start the System
+```bash
 docker compose up -d --build
+```
 
 
 This command starts all required services:
@@ -178,14 +216,19 @@ Kafka and database failures are logged without crashing services
 
 Consumer handles duplicate and invalid messages gracefully
 
+
+
 # Testing
 
 The project includes both unit and integration tests.
 
-To run tests locally:
+Run tests inside the API container:
 
-python -m pytest
+docker compose exec api-service pytest
 
+Expected output:
+
+8 passed
 
 # Tests cover:
 
@@ -197,9 +240,23 @@ Database persistence
 
 Redis caching logic
 
+
+
 # Event Simulation
 
-Sensor events can be simulated using repeated API calls to the POST /api/events endpoint. This can be done using curl, Postman, or a simple script.
+The project includes a simulation script that generates multiple sensor events automatically.
+
+Run the script from the project root:
+
+python scripts/simulate_events.py
+
+The script sends random sensor events to the API endpoint:
+
+POST /api/events
+
+This allows testing the full pipeline:
+
+Client → API → Kafka → Consumer → MySQL → Redis Cache
 
 # Notes
 

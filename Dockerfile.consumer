@@ -1,10 +1,20 @@
+FROM python:3.11-slim AS builder
+
+WORKDIR /install
+
+COPY requirements.txt .
+
+RUN pip install --prefix=/install --no-cache-dir -r requirements.txt
+
+
 FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+ENV PYTHONPATH=/app
+
+COPY --from=builder /install /usr/local
 
 COPY app ./app
 
-CMD ["python", "-c", "from app.kafka.consumer import start_consumer; start_consumer()"]
+CMD ["python", "-m", "app.kafka.consumer"]

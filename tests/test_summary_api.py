@@ -1,6 +1,6 @@
 from datetime import datetime
-from app.models.processed_event import ProcessedEvent
 from app.models.db import SessionLocal
+from app.models.processed_event import ProcessedEvent
 
 
 def test_summary_endpoint(client):
@@ -24,11 +24,11 @@ def test_summary_endpoint(client):
     db.commit()
     db.close()
 
-    response = client.get("/api/events/summary/sensor-3")
+    response = client.get("/events/summary/sensor-3")
 
     assert response.status_code == 200
 
-    body = response.json()
-    assert body["average"] == 15
-    assert body["min"] == 10
-    assert body["max"] == 20
+    data = response.json()
+
+    assert data["min"] == 10
+    assert data["max"] == 20

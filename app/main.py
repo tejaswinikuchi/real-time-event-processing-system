@@ -1,32 +1,27 @@
-import time
-import logging
 from fastapi import FastAPI
+from sqlalchemy.exc import OperationalError
+import time
 
-from app.api.events import router as events_router
-from app.models.db import Base, engine
+from app.config.database import engine
+from app.models.processed_event import Base
+from app.api import events
 
-logging.basicConfig(level=logging.INFO)
+app = FastAPI()
 
-app = FastAPI(title="Real-Time Event Processing System")
+# Retry DB connection
+MAX_RETRIES = 10
+RETRY_DELAY = 3
 
-#  Only /api here
-app.include_router(events_router, prefix="/api")
+for attempt in range(MAX_RETRIES):
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("Database connected and tables created")
+        break
+    except OperationalError:
+        print(f"Database not ready, retrying... ({attempt+1}/{MAX_RETRIES})")
+        time.sleep(RETRY_DELAY)
+else:
+    raise Exception("Could not connect to database")
 
-
-@app.on_event("startup")
-def startup_event():
-    retries = 10
-    delay = 3
-
-    for attempt in range(retries):
-        try:
-            logging.info("Attempting database connection...")
-            Base.metadata.create_all(bind=engine)
-            logging.info("Database ready")
-            break
-        except Exception as e:
-            logging.error(f"Database not ready ({attempt+1}/{retries}): {e}")
-            time.sleep(delay)
-    else:
-        logging.critical("Database never became ready. Exiting.")
-        raise RuntimeError("Database unavailable")
+# IMPORTANT: no prefix here
+app.include_router(events.router)
